@@ -58,9 +58,16 @@ fi
 echo ""
 echo "🎉 VPS setup complete!"
 echo ""
-echo "📋 Next steps:"
-echo "   1. Log out and back in (if docker group was just added)"
-echo "   2. Test docker: docker --version"
-echo "   3. Deploy app: ./scripts/deploy.sh"
-echo ""
-echo "💡 For Kubernetes, you'll also need a cluster (k3s, microk8s, or managed service)" 
+
+# Check if docker group changes were made and apply them
+if ! groups $USER | grep &>/dev/null '\bdocker\b'; then
+    echo "🔄 Applying docker group changes..."
+    echo "💡 Running 'newgrp docker' to apply changes without logout..."
+    exec newgrp docker
+else
+    echo "📋 Next steps:"
+    echo "   1. Test docker: docker --version"
+    echo "   2. Deploy app: ./scripts/deploy-simple.sh (simple) or ./scripts/deploy.sh (K8s)"
+    echo ""
+    echo "💡 For Kubernetes, you'll also need a cluster (k3s, microk8s, or managed service)"
+fi 

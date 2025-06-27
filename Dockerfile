@@ -1,5 +1,5 @@
 # Build stage
-FROM rust:1.75-slim as builder
+FROM rust:1.82-slim as builder
 
 # Install required system dependencies
 RUN apt-get update && apt-get install -y \
@@ -10,14 +10,14 @@ RUN apt-get update && apt-get install -y \
 # Create app directory
 WORKDIR /usr/src/app
 
-# Copy manifest files
-COPY Cargo.toml Cargo.lock ./
+# Copy manifest files first for better caching
+COPY Cargo.toml ./
 
 # Copy source code
 COPY src ./src
 COPY migrations ./migrations
 
-# Build the application
+# Build the application (this will generate Cargo.lock if needed)
 RUN cargo build --release
 
 # Runtime stage

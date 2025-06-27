@@ -1,5 +1,5 @@
 # Migration runner image
-FROM rust:1.75-slim
+FROM rust:1.82-slim
 
 # Install required dependencies
 RUN apt-get update && apt-get install -y \
