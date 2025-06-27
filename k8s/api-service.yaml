@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kryptic-journal-api-service
+  namespace: kryptic-journal
+spec:
+  selector:
+    app: kryptic-journal-api
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+  type: ClusterIP 

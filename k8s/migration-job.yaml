@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kryptic-journal-migrations
+  namespace: kryptic-journal
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+      - name: wait-for-postgres
+        image: postgres:15-alpine
+        command: ['sh', '-c']
+        args:
+        - |
+          until pg_isready -h postgres-service -p 5432 -U kryptic_user; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+          echo "PostgreSQL is ready!"
+      containers:
+      - name: migrator
+        image: kryptic-journal-migrator:latest
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://kryptic_user:$(POSTGRES_PASSWORD)@postgres-service:5432/kryptic_journal"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: kryptic-journal-secrets
+              key: POSTGRES_PASSWORD
+      backoffLimit: 3

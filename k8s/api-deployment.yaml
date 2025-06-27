@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kryptic-journal-api
+  namespace: kryptic-journal
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: kryptic-journal-api
+  template:
+    metadata:
+      labels:
+        app: kryptic-journal-api
+    spec:
+      containers:
+      - name: api
+        image: kryptic-journal-backend:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://kryptic_user:$(POSTGRES_PASSWORD)@postgres-service:5432/kryptic_journal"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: kryptic-journal-secrets
+              key: POSTGRES_PASSWORD
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: kryptic-journal-secrets
+              key: JWT_SECRET
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: kryptic-journal-secrets
+              key: ENCRYPTION_KEY
+        - name: RUST_LOG
+          value: "info"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m" 

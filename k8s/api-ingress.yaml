@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kryptic-journal-ingress
+  namespace: kryptic-journal
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: "letsencrypt-prod" # Adjust if using cert-manager
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx # Adjust based on your ingress controller
+  tls:
+  - hosts:
+    - api.your-domain.com # Replace with your actual domain
+    secretName: kryptic-journal-tls
+  rules:
+  - host: api.your-domain.com # Replace with your actual domain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kryptic-journal-api-service
+            port:
+              number: 80 
