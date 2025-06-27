@@ -11,8 +11,14 @@ pub enum EncryptionError {
     DecryptionFailed,
     #[error("Invalid key length")]
     InvalidKeyLength,
-    #[error("Ring error: {0}")]
-    RingError(#[from] Unspecified),
+    #[error("Ring error")]
+    RingError,
+}
+
+impl From<Unspecified> for EncryptionError {
+    fn from(_: Unspecified) -> Self {
+        EncryptionError::RingError
+    }
 }
 
 pub struct EncryptionService {
@@ -41,17 +47,17 @@ impl EncryptionService {
     pub fn encrypt(&self, plaintext: &str) -> Result<String, EncryptionError> {
         let mut nonce_bytes = [0u8; NONCE_LEN];
         self.rng.fill(&mut nonce_bytes)
-            .map_err(EncryptionError::RingError)?;
+            .map_err(|_| EncryptionError::RingError)?;
 
         let nonce = Nonce::assume_unique_for_key(nonce_bytes);
         let unbound_key = UnboundKey::new(&AES_256_GCM, &self.key)
-            .map_err(EncryptionError::RingError)?;
+            .map_err(|_| EncryptionError::RingError)?;
         
         let mut sealing_key = SealingKey::new(unbound_key, OneNonceSequence(Some(nonce)));
         
         let mut in_out = plaintext.as_bytes().to_vec();
         sealing_key.seal_in_place_append_tag(Aad::empty(), &mut in_out)
-            .map_err(EncryptionError::RingError)?;
+            .map_err(|_| EncryptionError::RingError)?;
 
         // Prepend nonce to the encrypted data
         let mut result = nonce_bytes.to_vec();
@@ -70,16 +76,16 @@ impl EncryptionService {
 
         let (nonce_bytes, encrypted_data) = ciphertext.split_at(NONCE_LEN);
         let nonce = Nonce::try_assume_unique_for_key(nonce_bytes)
-            .map_err(EncryptionError::RingError)?;
+            .map_err(|_| EncryptionError::RingError)?;
 
         let unbound_key = UnboundKey::new(&AES_256_GCM, &self.key)
-            .map_err(EncryptionError::RingError)?;
+            .map_err(|_| EncryptionError::RingError)?;
         
         let mut opening_key = OpeningKey::new(unbound_key, OneNonceSequence(Some(nonce)));
         
         let mut in_out = encrypted_data.to_vec();
         let plaintext = opening_key.open_in_place(Aad::empty(), &mut in_out)
-            .map_err(EncryptionError::RingError)?;
+            .map_err(|_| EncryptionError::RingError)?;
 
         String::from_utf8(plaintext.to_vec())
             .map_err(|_| EncryptionError::DecryptionFailed)
