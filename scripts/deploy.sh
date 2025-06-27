@@ -2,7 +2,16 @@
 
 set -e
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Get the project root (parent of scripts directory)
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
 echo "🚀 Deploying Kryptic Journal to Kubernetes..."
+echo "📁 Project root: $PROJECT_ROOT"
+
+# Change to project root
+cd "$PROJECT_ROOT"
 
 # Build and tag Docker images
 echo "📦 Building Docker images..."
